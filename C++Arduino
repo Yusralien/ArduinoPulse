@@ -1,0 +1,85 @@
+/*#test
+/*produced by G4 section 1
+*/
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+// Create the OLED display object
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
+// Define the sensor pin
+#define sensor A0
+#define HIGH_PULSE_THRESHOLD 540  // Adjust this threshold for your sensor
+
+// Define variables for pulse and BPM calculation
+int pulseValue;
+long lastPulseTime = 0;
+long pulseInterval = 0;
+int pulseCount = 0;
+int bpm = 0;
+
+// Define variables for drawing the pulse wave on OLED
+int x = 0;  // Position of the next data point
+int lastX = 0;
+int lastY = 0;
+
+void setup() {
+  // Start Serial communication for debugging
+  Serial.begin(9600);
+
+  // Initialize the OLED display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {  // Use the I2C address 0x3C for 128x64 OLED
+    Serial.println(F("OLED display not detected!"));
+    while (true);  // Stop execution if display is not found
+  }
+  
+  display.clearDisplay();  // Clear any previous data on the screen
+  display.setTextColor(SSD1306_WHITE);  // Set the text color to white
+  display.setTextSize(2);  // Set the text size
+}
+
+void loop() {
+  pulseValue = analogRead(sensor);  // Read the heart pulse sensor
+
+  // Map the sensor value to a range suitable for displaying a graph
+  int mappedValue = map(pulseValue, 0, 1024, 0, 45);
+  int y = 60 - mappedValue;  // Set the y-coordinate based on the mapped sensor value
+
+  // Draw the pulse graph on the OLED
+  if (x > 128) {
+    x = 0;  // Reset to the beginning if the display width is exceeded
+    display.clearDisplay();  // Clear the display
+  }
+
+  // Draw a line from the last point to the new point
+  display.drawLine(lastX, lastY, x, y, WHITE);
+  lastX = x;
+  lastY = y;
+  x++;
+
+  // Check if a pulse has been detected
+  if (pulseValue > HIGH_PULSE_THRESHOLD) {
+    if (millis() - lastPulseTime > 1000) {  // Debounce the pulse detection
+      lastPulseTime = millis();
+      pulseCount++;  // Increment pulse count
+    }
+  }
+
+  // Calculate BPM every second (or update at your desired interval)
+  if (millis() - lastPulseTime >= 1000) {  // Update BPM every second
+    bpm = pulseCount * 60;  // Calculate BPM based on pulse count in the last second
+    pulseCount = 0;  // Reset pulse count after each calculation
+  }
+
+  // Display the BPM on the OLED
+  display.setCursor(0, 0);
+  display.print("BPM: ");
+  display.setTextSize(2);  // Larger text for BPM
+  display.print(bpm);  // Show the calculated BPM
+  display.display();  // Refresh the display
+
+  delay(100);  // Add a small delay to prevent excessive updates
+}
