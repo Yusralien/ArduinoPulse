@@ -1,0 +1,38 @@
+#include <LiquidCrystal.h>  // Use Tinkercad's built-in LCD library
+
+#define IR_PIN 2  // The pin where the IR sensor is connected
+
+// LCD pin setup (using Tinkercad's pins for the 16x2 LCD)
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);  // RS, E, D4, D5, D6, D7
+
+void setup() {
+  Serial.begin(9600);  // Start the serial communication for the Serial Monitor
+
+  // Initialize the LCD
+  lcd.begin(16, 2);  // Set up a 16x2 LCD
+  lcd.clear();
+  lcd.print("Heart Rate:");
+
+  // Set up the IR sensor pin
+  pinMode(IR_PIN, INPUT);
+}
+
+void loop() {
+  // Simulate a pulse value by generating a random number between 60 and 100 BPM
+  int heartRate = random(60, 100);  // Random BPM between 60 and 100
+
+  // Update the display every second
+  lcd.clear();  // Clear previous value
+  lcd.setCursor(0, 0);
+  lcd.print("Pulse Value:");
+  lcd.setCursor(0, 1);
+  lcd.print(heartRate);  // Display simulated BPM
+  lcd.print(" BPM");
+
+  // Output the heart rate to the Serial Monitor
+  Serial.print("Pulse Value: ");
+  Serial.print(heartRate);  // Display simulated BPM in the Serial Monitor
+  Serial.println(" BPM");
+
+  delay(1000);  // Update every second to simulate real-time changes
+}
